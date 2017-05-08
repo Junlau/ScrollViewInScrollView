@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "3B199E00BCFB8E7CE257BB4C2F994052FA5573D4",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "3B199E00BCFB8E7CE257BB4C2F994052FA5573D4" : 9223372036854775807,
+    "F20133DFA756810DEFADFA49E6276A42271BB9D9" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "D9E9EA3D-89D9-4B9B-9301-EBEA3209CA02",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "3B199E00BCFB8E7CE257BB4C2F994052FA5573D4" : "LJScrollView\/",
+    "F20133DFA756810DEFADFA49E6276A42271BB9D9" : ""
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "LJScrollView",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "LJScrollView.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:Junlau\/ScrollViewInScrollView.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "3B199E00BCFB8E7CE257BB4C2F994052FA5573D4"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Junlau\/ScrollViewInScrollView.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "F20133DFA756810DEFADFA49E6276A42271BB9D9"
+    }
+  ]
+}
