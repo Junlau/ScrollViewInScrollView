@@ -8,6 +8,7 @@
 
 #import "LJSecondScrollViewController.h"
 #import "LJDynamicItem.h"
+#import "MJRefresh.h"
 
 #define maxOffsetY 150
 
@@ -37,6 +38,8 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
     NSMutableArray *tableArray;
     
     __block BOOL isVertical;//是否是垂直
+    
+    UIPanGestureRecognizer *pan;
 }
 
 @property (nonatomic, strong) UIScrollView *mainScrollView;
@@ -71,7 +74,7 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
     [self.mainScrollView addSubview:self.subScrollView];
     self.mainScrollView.contentSize = CGSizeMake(width, maxOffsetY + self.subScrollView.frame.size.height);
     
-    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(panGestureRecognizerAction:)];
+    pan = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(panGestureRecognizerAction:)];
     pan.delegate = self;
     [self.view addGestureRecognizer:pan];
     
@@ -110,6 +113,15 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
             tableView.delegate = self;
             tableView.dataSource = self;
             tableView.scrollEnabled = NO;
+            tableView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+                NSLog(@"mj_footer");
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [tableView.mj_footer  endRefreshing];
+                });
+            }];
+//            ((MJRefreshAutoNormalFooter *)tableView.mj_footer).automaticallyRefresh = NO;
+            
+            [tableView.mj_footer beginRefreshing];
             [_subScrollView addSubview:tableView];
             [tableArray addObject:tableView];
         }
@@ -122,6 +134,9 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
 #pragma mark - UITableViewDelegate
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (tableView  == tableArray[0]) {
+        return 5;
+    }
     return 26;
 }
 
@@ -142,6 +157,7 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     
 }
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
     if (scrollView == self.subScrollView) {
         CGFloat a = self.subScrollView.contentOffset.x/self.subScrollView.frame.size.width;
@@ -203,7 +219,6 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
             break;
         case UIGestureRecognizerStateEnded:
         {
-            
             if (isVertical) {
                 self.dynamicItem.center = self.view.bounds.origin;
                 //velocity是在手势结束的时候获取的竖直方向的手势速度
@@ -244,7 +259,7 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
             offsetY = 0;
             self.mainScrollView.contentOffset = CGPointMake(self.mainScrollView.frame.origin.x, self.mainScrollView.contentOffset.y - detal);
         } else if (offsetY > (self.subTableView.contentSize.height - self.subTableView.frame.size.height)) {
-            //当子ScrollView的contentOffset大于contentSize.height时
+            //当子ScrollView的contentOffset大于tableView的可移动距离时
             
             offsetY = self.subTableView.contentOffset.y - rubberBandDistance(detal, height);
 //            offsetY = self.subTableView.contentSize.height - self.subTableView.frame.size.height;
@@ -252,6 +267,7 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
 //            frame.origin.y += rubberBandDistance(detal, height);
 //            self.mainScrollView.frame = frame;
         }
+        NSLog(@"subTableView -- %f",offsetY);
         self.subTableView.contentOffset = CGPointMake(0, offsetY);
     } else {
         CGFloat mainOffsetY = self.mainScrollView.contentOffset.y - detal;
@@ -267,6 +283,7 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
         } else if (mainOffsetY > maxOffsetY) {
             mainOffsetY = maxOffsetY;
         }
+        NSLog(@"mainScrollView -- %f",mainOffsetY);
         self.mainScrollView.contentOffset = CGPointMake(self.mainScrollView.frame.origin.x, mainOffsetY);
         
         if (mainOffsetY == 0) {
@@ -276,10 +293,9 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
         }
     }
     
-    BOOL outsideFrame = self.mainScrollView.contentOffset.y < 0 || self.subTableView.contentOffset.y > (self.subTableView.contentSize.height - self.subTableView.frame.size.height);
+    BOOL outsideFrame = [self outsideFrame];
     if (outsideFrame &&
         (self.decelerationBehavior && !self.springBehavior)) {
-
         CGPoint target = CGPointZero;
         BOOL isMian = NO;
         if (self.mainScrollView.contentOffset.y < 0) {
@@ -288,7 +304,9 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
             isMian = YES;
         } else if (self.subTableView.contentOffset.y > (self.subTableView.contentSize.height - self.subTableView.frame.size.height)) {
             self.dynamicItem.center = self.subTableView.contentOffset;
-            target = CGPointMake(self.subTableView.contentOffset.x, (self.subTableView.contentSize.height - self.subTableView.frame.size.height));
+            
+            target.x = self.subTableView.contentOffset.x;
+            target.y = self.subTableView.contentSize.height > self.subTableView.frame.size.height ? self.subTableView.contentSize.height - self.subTableView.frame.size.height: 0;
             isMian = NO;
         }
         [self.animator removeBehavior:self.decelerationBehavior];
@@ -307,11 +325,37 @@ static CGFloat rubberBandDistance(CGFloat offset, CGFloat dimension) {
                 }
             } else {
                 weakSelf.subTableView.contentOffset = self.dynamicItem.center;
+                if (weakSelf.subTableView.mj_footer.refreshing) {
+                    weakSelf.subTableView.contentOffset = CGPointMake(weakSelf.subTableView.contentOffset.x, weakSelf.subTableView.contentOffset.y + 44);
+                }
             }
         };
         [self.animator addBehavior:springBehavior];
         self.springBehavior = springBehavior;
     }
 }
+
+//判断是否超出ViewFrame边界
+- (BOOL)outsideFrame {
+    if (self.mainScrollView.contentOffset.y < 0) {
+        return YES;
+    }
+    if (self.subTableView.contentSize.height > self.subTableView.frame.size.height) {
+        if (self.subTableView.contentOffset.y > (self.subTableView.contentSize.height - self.subTableView.frame.size.height)) {
+            return YES;
+        } else {
+            return NO;
+        }
+    } else {
+        if (self.subTableView.contentOffset.y > 0) {
+            return YES;
+        } else {
+            return NO;
+        }
+    }
+    return NO;
+}
+
+
 
 @end
